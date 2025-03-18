@@ -93,8 +93,8 @@ async function restoreAsync(selector) {
   const archiveCollection = Mongo.getCollection(config.name);
 
   return Mongo.withTransaction(async () => {
-    const archivedDocs = await archiveCollection.find({ _collection, ...selector }).fetchAsync();
-    if (!archivedDocs.length) {
+    const archivedDocs = await archiveCollection?.find({ _collection, ...selector }).fetchAsync();
+    if (!archivedDocs?.length) {
       return 0;
     }
 
