@@ -1,6 +1,6 @@
 Package.describe({
   name: 'jam:archive',
-  version: '0.1.1',
+  version: '0.1.2',
   summary: 'An easy way to add an archive mechanism to your Meteor app',
   git: 'https://github.com/jamauro/archive',
   documentation: 'README.md'

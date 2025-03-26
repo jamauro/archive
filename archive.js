@@ -2,8 +2,6 @@ import { Meteor } from 'meteor/meteor';
 import { Mongo, MongoInternals } from 'meteor/mongo';
 import { check, Match } from 'meteor/check';
 
-const getRawCollection = name => Meteor.isServer && MongoInternals.defaultRemoteCollectionDriver().mongo.db.collection(name);
-
 /**
  * @typedef {Object} ArchiveConfig
  * @property {string} name - The name given to your Archives collection, defaults to "archives"
@@ -58,7 +56,6 @@ async function archiveAsync(selector) {
   const _collection = this._name;
   const archiveName = config.name;
   const archiveCollection = Mongo.getCollection(archiveName);
-  const archiveRawCollection = getRawCollection(archiveName);
 
   return Mongo.withTransaction(async () => {
     const docs = await this.find(selector).fetchAsync();
@@ -78,10 +75,7 @@ async function archiveAsync(selector) {
     }
 
     await this.removeAsync({_id: {$in: ids}}, { forever: true });
-
-    Meteor.isClient
-      ? await Promise.all(docs.map(async d => await archiveCollection?.insertAsync(d)))
-      : await archiveRawCollection.insertMany(docs);
+    await Promise.all(docs.map(async d => archiveCollection?.insertAsync(d)))
 
     return docs.length;
   });
@@ -89,7 +83,6 @@ async function archiveAsync(selector) {
 
 async function restoreAsync(selector) {
   const _collection = this._name;
-  const rawCollection = getRawCollection(_collection);
   const archiveCollection = Mongo.getCollection(config.name);
 
   return Mongo.withTransaction(async () => {
@@ -110,10 +103,8 @@ async function restoreAsync(selector) {
       docs.push(doc);
     }
 
-    Meteor.isClient
-      ? await Promise.all(docs.map(async d => await this.insertAsync(d)))
-      : await rawCollection.insertMany(docs);
 
+    await Promise.all(docs.map(async d => this.insertAsync(d)))
     await archiveCollection?.removeAsync({_id: {$in: archiveIds}}, { forever: true });
 
     return archivedDocs.length;
